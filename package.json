@@ -1,0 +1,66 @@
+{
+  "name": "next-route-kit",
+  "version": "0.1.0",
+  "description": "Type-safe, composable API route handlers for the Next.js App Router",
+  "author": "slxca",
+  "keywords": [
+    "nextjs",
+    "api-routes",
+    "type-safe",
+    "route-handler",
+    "zod",
+    "validation",
+    "app-router"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/slxca/next-route-kit.git"
+  },
+  "homepage": "https://github.com/slxca/next-route-kit#readme",
+  "bugs": {
+    "url": "https://github.com/slxca/next-route-kit/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup && tsc --emitDeclarationOnly --declaration --declarationMap --rootDir src --outDir dist",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "prepublishOnly": "pnpm typecheck && pnpm test && pnpm build"
+  },
+  "peerDependencies": {
+    "next": ">=14.0.0",
+    "zod": ">=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "zod": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "tsup": "^8.5.1",
+    "typescript": "^7.0.2"
+  }
+}

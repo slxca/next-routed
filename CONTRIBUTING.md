@@ -1,6 +1,6 @@
-# Contributing to next-route-kit
+# Contributing to next-routed
 
-Thanks for helping improve `next-route-kit`. Bug reports, documentation fixes, tests, and focused feature proposals are welcome.
+Thanks for helping improve `next-routed`. Bug reports, documentation fixes, tests, and focused feature proposals are welcome.
 
 ## Reporting issues
 
@@ -38,9 +38,9 @@ pnpm build
 The basic consumer example is in `examples/basic`:
 
 ```bash
-pnpm --filter next-route-kit-basic-example dev
-pnpm --filter next-route-kit-basic-example typecheck
-pnpm --filter next-route-kit-basic-example build
+pnpm --filter next-routed-basic-example dev
+pnpm --filter next-routed-basic-example typecheck
+pnpm --filter next-routed-basic-example build
 ```
 
 ## Pull requests

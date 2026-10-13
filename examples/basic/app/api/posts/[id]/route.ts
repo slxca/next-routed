@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { NotFoundError, route } from "next-route-kit";
+import { NotFoundError, route } from "next-routed";
 import {
   adminRoute,
   asAppRoute,
@@ -13,7 +13,7 @@ const paramsSchema = z.object({
 const posts = [
   {
     id: "post-1",
-    title: "Welcome to next-route-kit",
+    title: "Welcome to next-routed",
     content: "Build composable, type-safe App Router handlers.",
     tags: ["nextjs", "typescript"],
     authorId: "admin-1",

@@ -1,4 +1,4 @@
-import { route } from "next-route-kit";
+import { route } from "next-routed";
 import { asAppRoute } from "@/lib/api";
 
 export const GET = asAppRoute(

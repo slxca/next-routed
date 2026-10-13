@@ -1,5 +1,5 @@
 {
-  "name": "next-route-kit",
+  "name": "next-routed",
   "version": "0.1.0",
   "description": "Type-safe, composable API route handlers for the Next.js App Router",
   "author": "slxca",

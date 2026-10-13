@@ -1,5 +1,5 @@
 {
-  "name": "next-route-kit-basic-example",
+  "name": "next-routed-basic-example",
   "private": true,
   "version": "0.1.0",
   "scripts": {
@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "next": "^15.5.6",
-    "next-route-kit": "workspace:*",
+    "next-routed": "workspace:*",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "zod": "^4.1.12"

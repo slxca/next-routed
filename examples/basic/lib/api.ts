@@ -4,9 +4,9 @@ import {
   UnauthorizedError,
   type Middleware,
   type RouteContext,
-} from "next-route-kit";
+} from "next-routed";
 import type { NextRequest } from "next/server";
-import type { NextRequestLike } from "next-route-kit";
+import type { NextRequestLike } from "next-routed";
 
 export interface User {
   id: string;

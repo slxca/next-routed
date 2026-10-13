@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { RouteResponse, route } from "next-route-kit";
+import { RouteResponse, route } from "next-routed";
 import { asAppRoute, protectedRoute, type ProtectedContext } from "@/lib/api";
 
 const postsQuerySchema = z.object({
@@ -17,7 +17,7 @@ const createPostSchema = z.object({
 const posts = [
   {
     id: "post-1",
-    title: "Welcome to next-route-kit",
+    title: "Welcome to next-routed",
     content: "Build composable, type-safe App Router handlers.",
     tags: ["nextjs", "typescript"],
     authorId: "admin-1",

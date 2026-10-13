@@ -15,7 +15,7 @@ Please do not report security vulnerabilities in public issues, pull requests, o
 
 Use GitHub's private security advisory feature for this repository:
 
-<https://github.com/slxca/next-route-kit/security/advisories/new>
+<https://github.com/slxca/next-routed/security/advisories/new>
 
 Include the affected version, a clear description of the impact, reproduction steps or a proof of concept, and any suggested mitigation. Remove secrets and personal data from the report.
 

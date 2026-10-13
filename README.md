@@ -1,8 +1,8 @@
-# next-route-kit
+# next-routed
 
 Type-safe, composable API route handlers for the Next.js App Router.
 
-`next-route-kit` eliminates API route boilerplate. It provides automatic TypeScript schema inference, composable middleware pipelines, authentication guards, unified error handling, and fluent responses — with zero runtime dependencies beyond Next.js.
+`next-routed` eliminates API route boilerplate. It provides automatic TypeScript schema inference, composable middleware pipelines, authentication guards, unified error handling, and fluent responses — with zero runtime dependencies beyond Next.js.
 
 ## Features
 
@@ -16,10 +16,10 @@ Type-safe, composable API route handlers for the Next.js App Router.
 ## Installation
 
 ```bash
-npm install next-route-kit next
-pnpm add next-route-kit next
-yarn add next-route-kit next
-bun add next-route-kit next
+npm install next-routed next
+pnpm add next-routed next
+yarn add next-routed next
+bun add next-routed next
 ```
 
 For schema validation, install Zod (or any Standard Schema compatible library):
@@ -33,7 +33,7 @@ pnpm add zod
 Create `app/api/hello/route.ts`:
 
 ```ts
-import { route } from "next-route-kit";
+import { route } from "next-routed";
 
 export const GET = route.handle(() => {
   return { message: "Hello, World!" };
@@ -60,7 +60,7 @@ Inputs are automatically validated and strictly typed in your handler. No manual
 ### Query & Body Validation
 
 ```ts
-import { route, RouteResponse, HttpStatus } from "next-route-kit";
+import { route, RouteResponse, HttpStatus } from "next-routed";
 import { z } from "zod";
 
 export const POST = route
@@ -88,11 +88,11 @@ export const POST = route
 
 ### Dynamic Route Params (Next.js 14 & 15+)
 
-`next-route-kit` automatically resolves async route parameters:
+`next-routed` automatically resolves async route parameters:
 
 ```ts
 // app/api/users/[id]/route.ts
-import { route } from "next-route-kit";
+import { route } from "next-routed";
 import { z } from "zod";
 
 export const GET = route
@@ -111,7 +111,7 @@ export const GET = route
 Use `RouteResponse` whenever you need control over HTTP status codes, headers, cookies, or text formats.
 
 ```ts
-import { route, RouteResponse, HttpStatus } from "next-route-kit";
+import { route, RouteResponse, HttpStatus } from "next-routed";
 
 // Explicit status & envelope
 export const POST = route.handle(() => {
@@ -143,7 +143,7 @@ Build reusable, shared route pipelines across your application using `.use()`.
 
 ```ts
 // lib/api.ts
-import { route, UnauthorizedError } from "next-route-kit";
+import { route, UnauthorizedError } from "next-routed";
 
 // 1. Base pipeline with context enrichment
 export const publicRoute = route.use(({ request, params }) => {
@@ -193,7 +193,7 @@ Middleware can short-circuit the entire request early by returning a `Response` 
 Throw typed API errors inside any middleware or handler:
 
 ```ts
-import { route, NotFoundError } from "next-route-kit";
+import { route, NotFoundError } from "next-routed";
 
 export const GET = route.handle(() => {
   const item = findItem();

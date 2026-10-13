@@ -1,12 +1,7 @@
 import { z } from "zod";
+import { NotFoundError, route } from "next-route-kit";
 import {
-  NotFoundError,
-  ResponseBuilder,
-  createRoute,
-  type BaseContext,
-} from "next-route-kit";
-import {
-  adminRouter,
+  adminRoute,
   asAppRoute,
   type AdminContext,
 } from "@/lib/api";
@@ -25,60 +20,33 @@ const posts = [
   },
 ];
 
-type PostParamsContext = BaseContext & {
-  params: {
-    id: string;
-  };
-};
-
 export const GET = asAppRoute(
-  createRoute<PostParamsContext, {
-    id: string;
-    title: string;
-    content: string;
-    tags: string[];
-    authorId: string;
-  }>({
-    validation: {
-      params: paramsSchema,
-    },
-    handler: ({ params }) => {
-      const post = posts.find((candidate) => candidate.id === params.id);
-
-      if (!post) {
-        throw new NotFoundError("Post not found", "POST_NOT_FOUND");
-      }
-
-      return post;
-    },
+  route.params(paramsSchema).handle(({ params }) => {
+    const post = posts.find((candidate) => candidate.id === params.id);
+    if (!post) {
+      throw new NotFoundError("Post not found", "POST_NOT_FOUND");
+    }
+    return post;
   })
 );
 
 export const DELETE = asAppRoute(
-  adminRouter.handler(async (context: AdminContext) => {
-    const params = await context.params;
-    const parsedParams = paramsSchema.safeParse(params);
-
-    if (!parsedParams.success) {
-      return ResponseBuilder.error(parsedParams.error, {
-        status: 400,
-      });
+  adminRoute.params(paramsSchema).handle(
+    async (
+      context: AdminContext & { params: z.infer<typeof paramsSchema> }
+    ) => {
+      const index = posts.findIndex(
+        (candidate) => candidate.id === context.params.id
+      );
+      if (index === -1) {
+        throw new NotFoundError("Post not found", "POST_NOT_FOUND");
+      }
+      const [deletedPost] = posts.splice(index, 1);
+      return {
+        deleted: true,
+        postId: deletedPost.id,
+        deletedBy: context.user.id,
+      };
     }
-
-    const index = posts.findIndex(
-      (candidate) => candidate.id === parsedParams.data.id
-    );
-
-    if (index === -1) {
-      throw new NotFoundError("Post not found", "POST_NOT_FOUND");
-    }
-
-    const [deletedPost] = posts.splice(index, 1);
-
-    return {
-      deleted: true,
-      postId: deletedPost.id,
-      deletedBy: context.user.id,
-    };
-  })
+  )
 );

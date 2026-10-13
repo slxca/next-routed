@@ -1,7 +1,25 @@
+# Dependencies
 node_modules/
+.pnpm-store/
+
+# Build output
 dist/
-*.log
-.DS_Store
-coverage/
-.idea/
 .next/
+out/
+*.tsbuildinfo
+
+# Test and coverage output
+coverage/
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# IDE and OS files
+.idea/
+.DS_Store

@@ -45,8 +45,6 @@
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "test": "node --test",
-    "changeset": "changeset",
-    "version-packages": "changeset version",
     "prepublishOnly": "pnpm typecheck && pnpm test && pnpm build"
   },
   "peerDependencies": {
@@ -60,6 +58,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
+    "next": "^15.5.6",
     "tsup": "^8.5.1",
     "typescript": "^7.0.2"
   }

@@ -1,87 +1,99 @@
+import type { NextResponse } from "next/server";
+
 export type NextRequestLike = Request & {
   nextUrl: URL;
 };
-
-export interface StandardSchemaV1<Input, Output> {
-  "~standard": {
-    version: 1;
-    vendor: string;
-    validate: (input: Input) => Promise<
-      | { value: Output }
-      | { issues: readonly StandardSchemaIssue[] }
-    >;
-  };
-}
 
 export interface StandardSchemaIssue {
   message: string;
   path?: readonly PropertyKey[];
 }
 
-export type Schema<TInput, TOutput = TInput> =
-  | {
-      safeParse(input: unknown): {
-        success: true;
-        data: TOutput;
-      } | {
-        success: false;
-        error: { issues: readonly StandardSchemaIssue[] };
-      };
-    }
-  | StandardSchemaV1<TInput, TOutput>;
-
-export interface ValidationSchemas<
-  TBody = unknown,
-  TQuery = unknown,
-  TParams = unknown,
-  THeaders = unknown
-> {
-  body?: Schema<TBody>;
-  query?: Schema<TQuery>;
-  params?: Schema<TParams>;
-  headers?: Schema<THeaders>;
+export interface StandardSchemaV1<Input, Output> {
+  "~standard": {
+    version: 1;
+    vendor: string;
+    validate: (
+      input: Input
+    ) =>
+      | Promise<{ value: Output } | { issues: readonly StandardSchemaIssue[] }>
+      | { value: Output }
+      | { issues: readonly StandardSchemaIssue[] };
+  };
 }
 
-export interface BaseContext {
+export type Schema<TOutput> =
+  | StandardSchemaV1<unknown, TOutput>
+  | {
+      safeParse(input: unknown):
+        | { success: true; data: TOutput }
+        | {
+            success: false;
+            error: { issues: readonly StandardSchemaIssue[] };
+          };
+    };
+
+export type InferSchema<TSchema> = TSchema extends Schema<infer TOutput>
+  ? TOutput
+  : never;
+
+export interface RouteContext {
   request: NextRequestLike;
   params: Record<string, string>;
 }
 
-export type ContextWith<T extends Record<string, unknown>> = BaseContext & T;
-
 export type Middleware<
-  Ctx extends BaseContext,
-  NewCtx extends BaseContext = Ctx
+  TContext extends RouteContext,
+  TNextContext extends RouteContext = TContext
 > = (
-  ctx: Ctx
-) => Promise<NewCtx | Response | void> | NewCtx | Response | void;
+  context: TContext
+) =>
+  | TNextContext
+  | NextResponse
+  | void
+  | Promise<TNextContext | NextResponse | void>;
 
-export type RouteHandler<Ctx extends BaseContext, TResponse = unknown> = (
-  ctx: Ctx
-) => Promise<TResponse | Response> | TResponse | Response;
+export type RouteHandler<TContext extends RouteContext, TResponse = unknown> = (
+  context: TContext
+) => TResponse | NextResponse | Promise<TResponse | NextResponse>;
 
-export type ErrorFormatter = (error: unknown, ctx: BaseContext) => Response;
-
-export interface RouteOptions<Ctx extends BaseContext, TResponse = unknown> {
-  validation?: ValidationSchemas;
-  middleware?: Middleware<BaseContext, Ctx>[];
-  handler: RouteHandler<Ctx, TResponse>;
-  errorFormatter?: ErrorFormatter;
+export interface ValidationConfig {
+  body?: Schema<unknown>;
+  query?: Schema<unknown>;
+  params?: Schema<unknown>;
+  headers?: Schema<unknown>;
 }
 
-export interface RouterBuilder<Ctx extends BaseContext> {
-  use<NewCtx extends BaseContext>(
-    middleware: Middleware<Ctx, NewCtx>
-  ): RouterBuilder<NewCtx>;
-  requireAuth<User>(
-    getUser: (ctx: Ctx) => Promise<User | null>
-  ): RouterBuilder<Ctx & { user: User }>;
-  handler<TResponse>(
-    handler: RouteHandler<Ctx, TResponse>
-  ): (
-    request: NextRequestLike,
-    context: {
-      params: Promise<Record<string, string>> | Record<string, string>;
-    }
-  ) => Promise<Response>;
+export interface RouteDefinition {
+  readonly middleware: readonly Middleware<RouteContext>[];
+  readonly validation: ValidationConfig;
+  readonly handler: RouteHandler<RouteContext>;
+}
+
+export type AppRouteHandler = (
+  request: NextRequestLike,
+  context: {
+    params: Promise<Record<string, string>> | Record<string, string>;
+  }
+) => Promise<Response>;
+
+export interface RouteBuilder<TContext extends RouteContext> {
+  use<TNextContext extends RouteContext>(
+    middleware: Middleware<TContext, TNextContext>
+  ): RouteBuilder<TNextContext>;
+  body<TSchema extends Schema<unknown>>(
+    schema: TSchema
+  ): RouteBuilder<TContext & { body: InferSchema<TSchema> }>;
+  query<TSchema extends Schema<unknown>>(
+    schema: TSchema
+  ): RouteBuilder<TContext & { query: InferSchema<TSchema> }>;
+  params<TSchema extends Schema<unknown>>(
+    schema: TSchema
+  ): RouteBuilder<TContext & { params: InferSchema<TSchema> }>;
+  headers<TSchema extends Schema<unknown>>(
+    schema: TSchema
+  ): RouteBuilder<TContext & { headers: InferSchema<TSchema> }>;
+  handle<TResponse>(
+    handler: RouteHandler<TContext, TResponse>
+  ): AppRouteHandler;
 }

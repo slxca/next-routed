@@ -1,108 +1,121 @@
+import { NextResponse } from "next/server";
+import type { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
 import { formatError } from "./errors.js";
 
-export interface ResponseFormatOptions {
-  id?: string;
-  status?: number;
-  headers?: HeadersInit;
+export enum HttpStatus {
+  CONTINUE = 100,
+  OK = 200,
+  CREATED = 201,
+  ACCEPTED = 202,
+  NO_CONTENT = 204,
+  BAD_REQUEST = 400,
+  UNAUTHORIZED = 401,
+  FORBIDDEN = 403,
+  NOT_FOUND = 404,
+  CONFLICT = 409,
+  UNPROCESSABLE_ENTITY = 422,
+  TOO_MANY_REQUESTS = 429,
+  INTERNAL_SERVER_ERROR = 500,
+  NOT_IMPLEMENTED = 501,
+  BAD_GATEWAY = 502,
+  SERVICE_UNAVAILABLE = 503,
 }
 
-export type ResponseFormatter = (
-  data: unknown,
-  id: string,
-  status: number
-) => Response;
+export type RouteCookie = Partial<ResponseCookie> & {
+  name: string;
+  value: string;
+};
 
-let defaultFormatter: ResponseFormatter = (data, id, status) =>
-  Response.json({ id, data }, { status });
+export class RouteResponseBuilder {
+  private readonly headers = new Headers();
+  private readonly cookies: RouteCookie[] = [];
 
-function getDefaultFormatter(): ResponseFormatter {
-  return defaultFormatter;
-}
+  constructor(private readonly statusCode: number) {}
 
-function setDefaultFormatter(formatter: ResponseFormatter): void {
-  defaultFormatter = formatter;
-}
-
-export class ResponseBuilder {
-  static setDefaultFormatter(formatter: ResponseFormatter): void {
-    setDefaultFormatter(formatter);
+  header(name: string, value: string): this {
+    this.headers.set(name, value);
+    return this;
   }
 
-  static getDefaultFormatter(): ResponseFormatter {
-    return getDefaultFormatter();
-  }
-
-  static json<T>(data: T, options: ResponseFormatOptions = {}): Response {
-    const id = options.id ?? "SUCCESS";
-    const status = options.status ?? 200;
-    const formatter = getDefaultFormatter();
-    const response = formatter(data, id, status);
-    if (options.headers) {
-      Object.entries(options.headers).forEach(([key, value]) => {
-        response.headers.set(key, value);
-      });
+  cookie(name: string, value: string, options?: Partial<ResponseCookie>): this;
+  cookie(cookie: RouteCookie): this;
+  cookie(
+    nameOrCookie: string | RouteCookie,
+    value?: string,
+    options: Partial<ResponseCookie> = {}
+  ): this {
+    if (typeof nameOrCookie === "string") {
+      this.cookies.push({ name: nameOrCookie, value: value ?? "", ...options });
+    } else {
+      this.cookies.push(nameOrCookie);
     }
+
+    return this;
+  }
+
+  json<T>(data: T, id = "SUCCESS"): NextResponse {
+    return this.finalize(
+      NextResponse.json({ id, data }, { status: this.statusCode })
+    );
+  }
+
+  text(body: string): NextResponse {
+    return this.finalize(
+      new NextResponse(body, {
+        status: this.statusCode,
+        headers: { "content-type": "text/plain; charset=utf-8" },
+      })
+    );
+  }
+
+  empty(): NextResponse {
+    return this.finalize(new NextResponse(null, { status: this.statusCode }));
+  }
+
+  private finalize(response: NextResponse): NextResponse {
+    this.headers.forEach((value, name) => response.headers.set(name, value));
+
+    for (const cookie of this.cookies) {
+      response.cookies.set(cookie);
+    }
+
     return response;
   }
+}
 
-  static success<T>(data: T, options: ResponseFormatOptions = {}): Response {
-    return this.json(data, { ...options, id: options.id ?? "SUCCESS" });
+export class RouteResponse {
+  static status(code: number): RouteResponseBuilder {
+    return new RouteResponseBuilder(code);
   }
 
-  static error(error: unknown, options: ResponseFormatOptions = {}): Response {
+  static json<T>(data: T, id = "SUCCESS"): NextResponse {
+    return this.status(HttpStatus.OK).json(data, id);
+  }
+
+  static text(body: string): NextResponse {
+    return this.status(HttpStatus.OK).text(body);
+  }
+
+  static empty(): NextResponse {
+    return this.status(HttpStatus.NO_CONTENT).empty();
+  }
+
+  static error(error: unknown, status?: number): NextResponse {
     const isProduction =
       (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV ===
       "production";
     const formatted = formatError(error, isProduction);
-    const status =
-      options.status ??
+    const resolvedStatus =
+      status ??
       (error instanceof Error &&
       "status" in error &&
       typeof (error as { status?: unknown }).status === "number"
         ? (error as { status: number }).status
-        : 500);
-    const formatter = getDefaultFormatter();
-    const response = formatter(
+        : HttpStatus.INTERNAL_SERVER_ERROR);
+
+    return RouteResponse.status(resolvedStatus).json(
       { message: formatted.message, details: formatted.details },
-      formatted.id,
-      status
+      formatted.id
     );
-    if (options.headers) {
-      Object.entries(options.headers).forEach(([key, value]) => {
-        response.headers.set(key, value);
-      });
-    }
-    return response;
   }
-
-  static custom<T>(
-    data: T,
-    formatter: ResponseFormatter,
-    options: ResponseFormatOptions = {}
-  ): Response {
-    const id = options.id ?? "SUCCESS";
-    const status = options.status ?? 200;
-    const response = formatter(data, id, status);
-    if (options.headers) {
-      Object.entries(options.headers).forEach(([key, value]) => {
-        response.headers.set(key, value);
-      });
-    }
-    return response;
-  }
-}
-
-export function extractResponseId(result: unknown): string | undefined {
-  if (result && typeof result === "object" && "id" in result) {
-    const id = (result as { id: unknown }).id;
-    if (typeof id === "string") return id;
-  }
-  return undefined;
-}
-
-export function extractResponseData(result: unknown): unknown {
-  if (result && typeof result === "object" && "data" in result) {
-    return (result as { data: unknown }).data;
-  }
-  return result;
 }

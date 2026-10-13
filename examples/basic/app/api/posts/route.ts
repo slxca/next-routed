@@ -1,15 +1,6 @@
 import { z } from "zod";
-import {
-  BadRequestError,
-  ResponseBuilder,
-  createRoute,
-  type BaseContext,
-} from "next-route-kit";
-import {
-  asAppRoute,
-  protectedRouter,
-  type ProtectedContext,
-} from "@/lib/api";
+import { RouteResponse, route } from "next-route-kit";
+import { asAppRoute, protectedRoute, type ProtectedContext } from "@/lib/api";
 
 const postsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -23,10 +14,6 @@ const createPostSchema = z.object({
   tags: z.array(z.string().trim().min(1).max(30)).max(10).default([]),
 });
 
-type PostsQueryContext = BaseContext & {
-  query: z.infer<typeof postsQuerySchema>;
-};
-
 const posts = [
   {
     id: "post-1",
@@ -38,59 +25,37 @@ const posts = [
 ];
 
 export const GET = asAppRoute(
-  createRoute<PostsQueryContext, {
-    posts: typeof posts;
-    page: number;
-    limit: number;
-    search: string;
-  }>({
-    validation: {
-      query: postsQuerySchema,
-    },
-    handler: ({ query }) => {
-      const matchingPosts = query.search
-        ? posts.filter((post) =>
-            `${post.title} ${post.content}`
-              .toLowerCase()
-              .includes(query.search.toLowerCase())
-          )
-        : posts;
+  route.query(postsQuerySchema).handle(({ query }) => {
+    const matchingPosts = query.search
+      ? posts.filter((post) =>
+          `${post.title} ${post.content}`
+            .toLowerCase()
+            .includes(query.search.toLowerCase())
+        )
+      : posts;
+    const start = (query.page - 1) * query.limit;
 
-      const start = (query.page - 1) * query.limit;
-
-      return {
-        posts: matchingPosts.slice(start, start + query.limit),
-        page: query.page,
-        limit: query.limit,
-        search: query.search,
-      };
-    },
+    return {
+      posts: matchingPosts.slice(start, start + query.limit),
+      page: query.page,
+      limit: query.limit,
+      search: query.search,
+    };
   })
 );
 
 export const POST = asAppRoute(
-  protectedRouter.handler(async (context: ProtectedContext) => {
-    const parsedBody = createPostSchema.safeParse(await context.request.json());
-
-    if (!parsedBody.success) {
-      throw new BadRequestError(
-        "Request body validation failed",
-        "VALIDATION_ERROR",
-        parsedBody.error.issues
-      );
+  protectedRoute.body(createPostSchema).handle(
+    async (
+      context: ProtectedContext & { body: z.infer<typeof createPostSchema> }
+    ) => {
+      const post = {
+        id: `post-${posts.length + 1}`,
+        ...context.body,
+        authorId: context.user.id,
+      };
+      posts.push(post);
+      return RouteResponse.status(201).json(post, "POST_CREATED");
     }
-
-    const post = {
-      id: `post-${posts.length + 1}`,
-      ...parsedBody.data,
-      authorId: context.user.id,
-    };
-
-    posts.push(post);
-
-    return ResponseBuilder.json(post, {
-      id: "POST_CREATED",
-      status: 201,
-    });
-  })
+  )
 );

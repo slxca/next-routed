@@ -1,10 +1,6 @@
-import { createRoute } from "next-route-kit";
+import { route } from "next-route-kit";
 import { asAppRoute } from "@/lib/api";
 
 export const GET = asAppRoute(
-  createRoute({
-    handler: () => ({
-      message: "Hello, World!",
-    }),
-  })
+  route.handle(() => ({ message: "Hello, World!" }))
 );

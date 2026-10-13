@@ -72,14 +72,4 @@ Fix response status handling
 Update route handler documentation
 ```
 
-For user-facing changes, create a Changeset:
-
-```bash
-pnpm changeset
-```
-
-Select the appropriate semver bump and describe the user-visible change. Maintainers can apply pending Changesets locally with:
-
-```bash
-pnpm version-packages
-```
+For user-facing changes, update the changelog as part of the release preparation.
